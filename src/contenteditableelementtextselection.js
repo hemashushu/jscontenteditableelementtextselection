@@ -319,6 +319,8 @@ class ContentEditableElementTextSelection {
             throw new UnsupportedOperationException('The content editable element is not the active element.');
         }
 
+        // https://developer.mozilla.org/en-US/docs/Web/API/Window/getSelection
+        // https://developer.mozilla.org/en-US/docs/Web/API/Selection
         let selection = window.getSelection();
         if (selection.rangeCount === 0) {
             // 当没有任何选中的内容时（连光标都没有），则返回 undefined
@@ -343,7 +345,8 @@ class ContentEditableElementTextSelection {
         let range = selection.getRangeAt(0);
         let startPosition = this.getPosition(range.startContainer, range.startOffset);
 
-        if (TextSelection.isCollapsed(selection)) {
+        // https://developer.mozilla.org/en-US/docs/Web/API/Selection/isCollapsed
+        if (selection.isCollapsed) {
             // 光标是折叠的，即只有光标，但没有选中 1 个或多个字符。
             return new TextSelection(startPosition);
         } else {
