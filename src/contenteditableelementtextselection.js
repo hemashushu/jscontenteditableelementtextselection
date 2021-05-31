@@ -43,8 +43,23 @@ const NodeAndOffsetPair = require('./nodeandoffsetpair');
  */
 class ContentEditableElementTextSelection {
 
-    constructor(contentEditableElement) {
+    /**
+     * windowObject, documentObject, nodeFilterObject, nodeObject 参数是可选的，用于非浏览器环境
+     *
+     * @param {*} contentEditableElement
+     * @param {*} windowObject
+     * @param {*} documentObject
+     * @param {*} nodeFilterObject
+     * @param {*} nodeObject
+     */
+    constructor(contentEditableElement,
+        windowObject, documentObject, nodeFilterObject, nodeObject) {
         this.contentEditableElement = contentEditableElement;
+
+        this.windowObject = windowObject ?? global.window;
+        this.documentObject = documentObject ?? global.document;
+        this.nodeFilterObject = nodeFilterObject ?? global.NodeFilter;
+        this.nodeObject = nodeObject ?? global.Node;
     }
 
     /**
@@ -73,7 +88,7 @@ class ContentEditableElementTextSelection {
         let workerPosStart = 0; // current node start position, equals to 'offset', include
         let workerPosEnd = 0;   // current node end position, equals to 'offset', include
 
-        let treeWalker = document.createTreeWalker(this.contentEditableElement, NodeFilter.SHOW_TEXT);
+        let treeWalker = this.documentObject.createTreeWalker(this.contentEditableElement, this.nodeFilterObject.SHOW_TEXT);
         while (treeWalker.nextNode()) {
             let currentNode = treeWalker.currentNode;
             let nodeValue = currentNode.nodeValue;
@@ -186,7 +201,7 @@ class ContentEditableElementTextSelection {
 
         let nodeAndOffsetPair = this.findNodeAndOffsetPairByTextSelection(textSelection);
 
-        let range = document.createRange();
+        let range = this.documentObject.createRange();
         range.setStart(nodeAndOffsetPair.start.node, nodeAndOffsetPair.start.offset);
         range.setEnd(nodeAndOffsetPair.end.node, nodeAndOffsetPair.end.offset);
         return range;
@@ -202,8 +217,8 @@ class ContentEditableElementTextSelection {
      */
     getPosition(node, offset) {
         // 检查指定的节点是否在编辑框内部
-        if ((this.contentEditableElement.compareDocumentPosition(node) & Node.DOCUMENT_POSITION_CONTAINED_BY) ===
-            Node.DOCUMENT_POSITION_CONTAINED_BY) {
+        if ((this.contentEditableElement.compareDocumentPosition(node) & this.nodeObject.DOCUMENT_POSITION_CONTAINED_BY) ===
+            this.nodeObject.DOCUMENT_POSITION_CONTAINED_BY) {
             // pass
         } else if (this.contentEditableElement === node) {
             // 编辑框内部是空的，没有任何节点（连文字节点 TEXTNODE 都没有）
@@ -279,13 +294,13 @@ class ContentEditableElementTextSelection {
      */
     setSelection(textSelection) {
         // https://developer.mozilla.org/en-US/docs/Web/API/Document/activeElement
-        let activeElement = document.activeElement;
+        let activeElement = this.documentObject.activeElement;
         if (activeElement !== this.contentEditableElement) {
             throw new UnsupportedOperationException('The active element is not the specified content editable element.');
         }
 
         let range = this.createRange(textSelection);
-        let selection = window.getSelection();
+        let selection = this.windowObject.getSelection();
 
         // 选定文本的正常流程是先使用 selection.removeAllRanges() 方法把旧的所有选中的
         // Range 清除，然后再使用 selection.addRange(range) 方法选中指定文本，但
@@ -315,14 +330,14 @@ class ContentEditableElementTextSelection {
      */
     getSelection() {
         // https://developer.mozilla.org/en-US/docs/Web/API/Document/activeElement
-        let activeElement = document.activeElement;
+        let activeElement = this.documentObject.activeElement;
         if (activeElement !== this.contentEditableElement) {
             throw new UnsupportedOperationException('The content editable element is not the active element.');
         }
 
         // https://developer.mozilla.org/en-US/docs/Web/API/Window/getSelection
         // https://developer.mozilla.org/en-US/docs/Web/API/Selection
-        let selection = window.getSelection();
+        let selection = this.windowObject.getSelection();
         if (selection.rangeCount === 0) {
             // 当没有任何选中的内容时（连光标都没有），则返回 undefined
             return;
