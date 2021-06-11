@@ -168,7 +168,6 @@ class ContentEditableElementTextSelection {
         }
 
         if (nodeAndOffsets.length !== 2) {
-            console.trace(textSelection);
             throw new IllegalArgumentException('The value of TextSelection is out of text range.');
         }
 
